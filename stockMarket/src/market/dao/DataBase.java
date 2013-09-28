@@ -32,49 +32,35 @@ public class DataBase {
 		
 	}
 	
-    /**
-     * Delete previous orders from "agentOrders".
-     *
-     * @param agentId
-     */
-    public void deletePreOrders(int agentId) {
-    	Connection con = null;
-    	Statement stmt = null;
-    	try {
-        	con = DbPoolUtil.getInstance().getConnection();
-            stmt = con.createStatement();
-            String delete = "delete from agentOrders where agentId = " + agentId;
-            stmt.executeUpdate(delete);
-        } catch (SQLException ex) {
-            Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Delete previous orders failed!");
-        } catch (Exception e) {
-			e.printStackTrace();
-		}finally{
-			DbPoolUtil.closeStatement(stmt);
-            DbPoolUtil.closeConnection(con);
-		}
-    }
 
     /**
      * Insert orders into table "agentOrders".
      *
      * @param or a order
      */
-    public void insertOrder(Order or) {
+    public int insertOrder(Order or) {
     	Connection con = null;
     	PreparedStatement pstmtAgent = null;
+    	Statement stmt = null;
+    	int currentKey = -1;
     	try {
         	con = DbPoolUtil.getInstance().getConnection();
-        	pstmtAgent = con.prepareStatement("insert into agentOrders(AgentId,Price,Volume,Direction,OrderId,CreateTime) values("
-                  + "?,?,?,?,?,?)");
+        	pstmtAgent = con.prepareStatement("insert into agentOrders(AgentId,Price,Volume,Direction,CreateTime) values("
+                  + "?,?,?,?,?)");
             pstmtAgent.setInt(1, or.getAgentId());
             pstmtAgent.setDouble(2, or.getPrice());
             pstmtAgent.setInt(3, or.getVolume());
             pstmtAgent.setInt(4, or.getDirection());
-            pstmtAgent.setInt(5, or.getOrderId());
             pstmtAgent.setLong(6, or.getCreateTime());
             pstmtAgent.executeUpdate();
+             
+            stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+            if(rs.next()){
+            	currentKey = rs.getInt(1);
+            }
+            rs.close();
+            stmt.close();
         } catch (SQLException ex) {
             Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("Insert order failed!");
@@ -85,6 +71,8 @@ public class DataBase {
 			DbPoolUtil.closePrepStmt(pstmtAgent);
 			DbPoolUtil.closeConnection(con);
 		}
+    	
+    	return currentKey;
     }
 
     /**

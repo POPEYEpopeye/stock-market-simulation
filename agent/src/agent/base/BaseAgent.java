@@ -136,6 +136,9 @@ public abstract class BaseAgent {
 	 */
 	public String submitOrder(Order or){
 		if( null != or ){
+			or.setCreateTime(System.currentTimeMillis());
+			int orderId = db.insertOrder(or);
+			or.setId(orderId);
 			return getMessageFromMarket( "200" + or.convertSelfToString() );
 		}
 		else

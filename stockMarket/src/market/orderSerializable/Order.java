@@ -4,28 +4,28 @@ public class Order implements IMessage{
 	
 	private static final long serialVersionUID = -6715728675040627672L;		//generated serialVersionUID
 	
+	private Integer id;
 	private Integer agentId;
     private Double price;
     private Integer volume;
     private Integer direction;  //0 mean sell, 1 mean buy.
-    private Integer orderId;
     private Long createTime;
 
 
     public Order() {
+    	this.id = 0;
         this.agentId = 0;
         this.price = 0d;
         this.volume = 0;
         this.direction = 0;
-        this.orderId = 0;
     }
 
-    public Order(Integer agentId, Double price, Integer volume, Integer direction, Integer orderId, Long createTime) {
-        this.agentId = agentId;
+    public Order(Integer id, Integer agentId, Double price, Integer volume, Integer direction, Long createTime) {
+        this.id = id;
+    	this.agentId = agentId;
         this.price = price;
         this.volume = volume;
         this.direction = direction;
-        this.orderId = orderId;
         this.createTime = createTime;
     }
 
@@ -42,8 +42,6 @@ public class Order implements IMessage{
     }
 
     public Double getPrice() {
-    	if( null == price )
-    		return 0D;
         return price;
     }
 
@@ -52,8 +50,6 @@ public class Order implements IMessage{
     }
 
     public Integer getVolume() {
-    	if( null == volume )
-    		return 0;
         return volume;
     }
 
@@ -62,34 +58,40 @@ public class Order implements IMessage{
     }
 
     public Integer getDirection() {
-    	if( null == direction )
-    		return 0;
         return direction;
     }
 
-    public Integer getOrderId() {
-    	if( null == orderId )
-    		return 0;
-        return orderId;
-    }
-
-    public void setOrderId(Integer orderId) {
-        this.orderId = orderId;
-    }
-
     public Long getCreateTime() {
-    	if( null == createTime )
-    		return 0L;
         return createTime;
     }
-
+    
     public void setCreateTime(Long createTime) {
         this.createTime = createTime;
     }
 
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
 	@Override
 	public String convertSelfToString() {
 		Integer lackLength;
+		
+		String idStr = String.valueOf(id);
+		if(idStr.length() <= 6){
+            lackLength = 6 - idStr.length();
+            for(int i = 0; i < lackLength; i++){
+                idStr = "0" + idStr;
+            }
+        }
+        else{
+        	idStr = idStr.substring(idStr.length() - 6);
+        }
+		
         String agentIdStr = String.valueOf(agentId);
         if(agentIdStr.length() <= 8){
             lackLength = 8 - agentIdStr.length();
@@ -123,46 +125,33 @@ public class Order implements IMessage{
             priceStr = priceStr.substring( 0,8 );
         }
         
-        String orderIdStr = String.valueOf(orderId);
-        if(orderIdStr.length() <= 4){
-            lackLength = 4 - orderIdStr.length();
-            for(int i = 0; i < lackLength; i++){
-                orderIdStr = "0" + orderIdStr;
-            }
-        }
-        else{
-            orderIdStr = orderIdStr.substring( 0,4);
-        }
         
         String directionStr = String.valueOf(direction);
 
-        String timeStr = Long.toString(createTime);
+//        String timeStr = Long.toString(createTime);
         
-        return agentIdStr + priceStr + volumeStr + directionStr + orderIdStr /*+ timeStr*/;
+        return idStr + agentIdStr + priceStr + volumeStr + directionStr /*+ timeStr*/;
 	}
 
 	@Override
 	public void setStringForSelf(String message) {
+		
+		String idStr = message.substring(0, 6);
+		this.setId(Integer.parseInt(idStr));
         
-        String agentIdStr = message.substring(0, 8);
+        String agentIdStr = message.substring(6, 14);
         this.setAgentId(Integer.parseInt(agentIdStr));
         
-        String priceStr = message.substring(8, 16);
-        this.setPrice( Double.parseDouble(priceStr) );
+        String priceStr = message.substring(14, 22);
+        this.setPrice(Double.parseDouble(priceStr));
         
-        String volumeStr = message.substring(16, 26);
+        String volumeStr = message.substring(22, 32);
         this.setVolume(Integer.parseInt(volumeStr));
-        
-        
-        
-        
-        String directionStr = message.substring(26, 27);
+      
+        String directionStr = message.substring(32, 33);
         this.setDirection(Integer.parseInt(directionStr));
         
-        String orderIdStr = message.substring(27, 31);
-        this.setOrderId(Integer.parseInt(orderIdStr));
-        
-        String timeStr = message.substring(31);
+        String timeStr = message.substring(33);
         if( null!= timeStr && !"".equals(timeStr.trim()) )
         	this.setCreateTime(Long.parseLong(timeStr));
         else

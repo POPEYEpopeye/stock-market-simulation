@@ -3,6 +3,7 @@ package agent.util;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
@@ -34,8 +35,8 @@ public class DataBase {
             Class.forName(drive);
             con = DriverManager.getConnection(url, username, password);
             System.out.println("Connect to DataBase sucessed!");
-            pstmtAgent = con.prepareStatement("insert into agentOrders(AgentId,Price,Volume,Direction,OrderId,CreateTime) values(" +
-                    "?,?,?,?,?,?)");
+            pstmtAgent = con.prepareStatement("insert into agentOrders(AgentId,Price,Volume,Direction,CreateTime) values(" +
+                    "?,?,?,?,?)");
             pstmtServer = con.prepareStatement("insert into tradeOrders(BuyId, BuyOrderId, SellId, SellOrderId, TradePrice, TradeVolume, TradeTime) values(" +
                     "?,?,?,?,?,?,?)");
             pstmtStoreAtt = con.prepareStatement("insert into attOfAgent values(" +
@@ -72,7 +73,7 @@ public class DataBase {
             con = DriverManager.getConnection(url, username, password);
             //System.out.println("Connect to DataBase sucessed!");
             pstmtAgent = con.prepareStatement("insert into agentOrders values(" +
-                    "?,?,?,?,?,?)");
+                    "?,?,?,?,?)");
             pstmtServer = con.prepareStatement("insert into tradeOrders values(" +
                     "?,?,?,?,?,?)");
             pstmtStoreAtt = con.prepareStatement("insert into attOfAgent values(" +
@@ -86,41 +87,34 @@ public class DataBase {
         }
     }
     
-    /**
-     * Delete previous orders from "agentOrders".
-     *
-     * @param agentId
-     */
-    public void deletePreOrders(int agentId){
-        try {
-            Statement stmt = con.createStatement();
-            String delete = "delete from agentOrders where agentId = " + agentId; 
-            stmt.executeUpdate(delete);
-            stmt.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Delete previous orders failed!");
-        }
-    }
      /**
      * Insert orders into table "agentOrders".
      *
      * @param or a order
      */
-    public void insertOrder(Order or) {
+    public int insertOrder(Order or) {
+    	Statement stmt = null;
+    	int currentKey = -1;
         try {
             pstmtAgent.setInt(1, or.getAgentId());
             pstmtAgent.setDouble(2, or.getPrice());
             pstmtAgent.setInt(3, or.getVolume());
             pstmtAgent.setInt(4, or.getDirection());
-            pstmtAgent.setInt(5, or.getOrderId());
-            pstmtAgent.setLong(6, or.getCreateTime());
+            pstmtAgent.setLong(5, System.currentTimeMillis());
             pstmtAgent.executeUpdate();
+            
+            stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+            if(rs.next()){
+            	currentKey = rs.getInt(1);
+            }
+            rs.close();
+            stmt.close();
         } catch (SQLException ex) {
             Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("Insert order failed!");
         }
-
+        return currentKey;
     }
     
     /**
@@ -143,9 +137,9 @@ public class DataBase {
 
     }
     /**
-     * Insert trade orders into table "tradeOrder".
+     * Insert agent attributes into table "attOfAgent".
      *
-     * @param tra a trade order
+     * @param agent of type BaseAgent
      */
 //    public void storeAttributes(attributesOfAgent att){
 //        try {
@@ -172,55 +166,4 @@ public class DataBase {
         }
     }
     
-    public void insertDecisionLog(Order orignalOrder, List<Order> referencedOrderList, Order resultOrder){
-    	try {
-			
-    		pstmtDecisionLog.setString(1, orignalOrder.getAgentId()+"");
-			pstmtDecisionLog.setDouble(2, orignalOrder.getPrice());
-			pstmtDecisionLog.setLong(3, orignalOrder.getVolume());
-			if( referencedOrderList.size() > 0 ){
-				pstmtDecisionLog.setString(4, referencedOrderList.get(0).getAgentId()+"");
-				pstmtDecisionLog.setDouble(5, referencedOrderList.get(0).getPrice());
-				pstmtDecisionLog.setLong(6, referencedOrderList.get(0).getVolume());
-				pstmtDecisionLog.setString(7, "");
-				pstmtDecisionLog.setDouble(8, 0);
-				pstmtDecisionLog.setLong(9, 0);
-				if( referencedOrderList.size() > 1 ){
-					pstmtDecisionLog.setString(7, referencedOrderList.get(1).getAgentId()+"");
-					pstmtDecisionLog.setDouble(8, referencedOrderList.get(1).getPrice());
-					pstmtDecisionLog.setLong(9, referencedOrderList.get(1).getVolume());
-				}
-			}
-			
-			pstmtDecisionLog.setDouble(10, resultOrder.getPrice());
-			pstmtDecisionLog.setLong(11, resultOrder.getVolume());
-			pstmtDecisionLog.setLong(12, resultOrder.getCreateTime());
-			
-			pstmtDecisionLog.execute();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-    }
-    
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-        DataBase db = new DataBase();
-        //java.util.ArrayList<tradeOrder> traList =
-        // new java.util.ArrayList();
-
-        //db.insertTradeOrder(new tradeOrder(8, 10, 5.55, 62));
-        //db.insertTradeOrder(new tradeOrder(9, 8, 5.1, 60));
-        //db.insertTradeOrder(new tradeOrder(16, 10, 7.3, 20));
-
-        //db.getLatestOneOrder();
-        //System.out.println(db.getMyTradeOrder(11, 108, traList));
-        //System.out.println(traList.size());
-        //if (0 == traList.size()) {
-        // System.out.println("Have no trade orders belong to me!");
-        //}
-        db.disconnectDB();
-    }
 }

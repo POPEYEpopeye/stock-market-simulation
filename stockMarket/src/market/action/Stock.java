@@ -107,9 +107,9 @@ public class Stock {
 			}
 			// set the Ids of tradeOrder
 			tempTrade.setBuyId(buyOrder.getAgentId());
-			tempTrade.setBuyOrderId(buyOrder.getOrderId());
+			tempTrade.setBuyOrderId(buyOrder.getId());
 			tempTrade.setSellId(sellOrder.getAgentId());
-			tempTrade.setSellOrderId(sellOrder.getOrderId());
+			tempTrade.setSellOrderId(sellOrder.getId());
 
 			tempTrade.setTradeTime(System.currentTimeMillis());
 			// set the volume of tradeOrder
